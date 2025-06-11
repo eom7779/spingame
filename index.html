@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>금등어 행운의 룰렛!</title>
+    <!-- 구글 폰트 - Noto Sans KR 추가 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <!-- 폭죽 효과를 위한 confetti.js 라이브러리 -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    
+    <style>
+        /* 전체 페이지 스타일 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background-color: #f5f5f5;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 컨테이너 스타일 */
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        /* 제목 스타일 */
+        .title {
+            font-size: 2.5rem;
+            color: #333;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 2rem;
+        }
+
+        /* 룰렛 컨테이너 스타일 */
+        .roulette-container {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto 2rem;
+        }
+
+        /* 룰렛 휠 스타일 */
+        .roulette-wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            position: relative;
+            overflow: hidden;
+            border: 15px solid #333;
+            transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            background: #fff;
+        }
+
+        /* 룰렛 섹션 스타일 */
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+            padding: 1rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+        }
+
+        /* 각 섹션의 위치와 색상 설정 */
+        .wheel-section:nth-child(1) { 
+            transform: rotate(0deg); 
+            background-color: #FF6B6B;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+        .wheel-section:nth-child(2) { 
+            transform: rotate(60deg); 
+            background-color: #4ECDC4;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+        .wheel-section:nth-child(3) { 
+            transform: rotate(120deg); 
+            background-color: #FFD93D;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+        .wheel-section:nth-child(4) { 
+            transform: rotate(180deg); 
+            background-color: #95E1D3;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+        .wheel-section:nth-child(5) { 
+            transform: rotate(240deg); 
+            background-color: #FF8B94;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+        .wheel-section:nth-child(6) { 
+            transform: rotate(300deg); 
+            background-color: #6C5CE7;
+            clip-path: polygon(0 0, 100% 0, 100% 100%);
+        }
+
+        /* 섹션 내부 텍스트 스타일 */
+        .wheel-section span {
+            transform: rotate(30deg);
+            display: block;
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 1.1rem;
+            line-height: 1.4;
+            text-align: center;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 포인터 스타일 */
+        .pointer {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 20px solid transparent;
+            border-right: 20px solid transparent;
+            border-top: 40px solid #333;
+            z-index: 2;
+        }
+
+        /* 결과 표시 영역 스타일 */
+        .result-container {
+            margin: 2rem 0;
+            min-height: 60px;
+        }
+
+        .result-text {
+            font-size: 2rem;
+            color: #333;
+            font-weight: bold;
+        }
+
+        /* 시작 버튼 스타일 */
+        .spin-button {
+            padding: 1rem 3rem;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: white;
+            background-color: #4CAF50;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .spin-button:hover {
+            background-color: #45a049;
+        }
+
+        .spin-button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        /* 반응형 디자인 */
+        @media (max-width: 600px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .title {
+                font-size: 2rem;
+            }
+
+            .roulette-container {
+                width: 250px;
+                height: 250px;
+            }
+
+            .wheel-section {
+                font-size: 0.9rem;
+            }
+
+            .result-text {
+                font-size: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 게임 제목 -->
+        <h1 class="title">금등어 행운의 룰렛!</h1>
+        <p class="subtitle">버튼을 눌러 행운을 가져가세요</p>
+
+        <!-- 룰렛 컨테이너 -->
+        <div class="roulette-container">
+            <!-- 룰렛 원판 -->
+            <div class="roulette-wheel">
+                <div class="wheel-section" data-prize="금등어 진공1팩"><span>금등어 진공1팩</span></div>
+                <div class="wheel-section" data-prize="10% 할인"><span>10% 할인</span></div>
+                <div class="wheel-section" data-prize="맛보기 꼬막"><span>맛보기 꼬막</span></div>
+                <div class="wheel-section" data-prize="음료수 1개"><span>음료수 1개</span></div>
+                <div class="wheel-section" data-prize="1천원할인권"><span>1천원할인권</span></div>
+                <div class="wheel-section" data-prize="꽝, 한번더!"><span>꽝, 한번더!</span></div>
+            </div>
+            <!-- 룰렛 포인터 -->
+            <div class="pointer"></div>
+        </div>
+
+        <!-- 결과 표시 영역 -->
+        <div class="result-container">
+            <h2 class="result-text"></h2>
+        </div>
+
+        <!-- 시작 버튼 -->
+        <button id="spinButton" class="spin-button">시작</button>
+    </div>
+
+    <script>
+        // DOM 요소 선택
+        const wheel = document.querySelector('.roulette-wheel');
+        const spinButton = document.getElementById('spinButton');
+        const resultText = document.querySelector('.result-text');
+
+        // 룰렛 섹션 데이터
+        const sections = [
+            '금등어 진공1팩',
+            '10% 할인',
+            '맛보기 꼬막',
+            '음료수 1개',
+            '1천원할인권',
+            '꽝, 한번더!'
+        ];
+
+        // 룰렛이 회전 중인지 확인하는 변수
+        let isSpinning = false;
+
+        // 랜덤 각도 생성 함수
+        function getRandomDegree() {
+            // 각 섹션은 60도씩 차지 (360도 / 6개 섹션)
+            const sectionAngle = 360 / sections.length;
+            // 랜덤한 섹션 선택 (0-5)
+            const randomSection = Math.floor(Math.random() * sections.length);
+            // 섹션의 중앙에 멈추도록 각도 조정
+            return randomSection * sectionAngle + (sectionAngle / 2);
+        }
+
+        // 폭죽 효과 함수
+        function showConfetti() {
+            // 여러 방향에서 폭죽 발사
+            const duration = 3 * 1000;
+            const animationEnd = Date.now() + duration;
+            const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                const particleCount = 50 * (timeLeft / duration);
+                
+                // 여러 방향에서 폭죽 발사
+                confetti({
+                    ...defaults,
+                    particleCount,
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 }
+                });
+                confetti({
+                    ...defaults,
+                    particleCount,
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 }
+                });
+            }, 250);
+        }
+
+        // 룰렛 회전 함수
+        function spinWheel() {
+            if (isSpinning) return;
+            
+            isSpinning = true;
+            spinButton.disabled = true;
+            resultText.textContent = '';
+
+            // 랜덤 각도 계산 (5바퀴 + 랜덤 각도)
+            const extraSpins = 5; // 추가 회전 수
+            const randomDegree = getRandomDegree();
+            const totalDegree = (360 * extraSpins) + randomDegree;
+
+            // 룰렛 회전 애니메이션
+            wheel.style.transform = `rotate(${totalDegree}deg)`;
+
+            // 5초 후 결과 표시
+            setTimeout(() => {
+                isSpinning = false;
+                spinButton.disabled = false;
+
+                // 당첨된 섹션 계산
+                const normalizedDegree = randomDegree % 360;
+                const sectionIndex = Math.floor(normalizedDegree / (360 / sections.length));
+                const prize = sections[sectionIndex];
+
+                // 결과 표시
+                resultText.textContent = `축하합니다! ${prize}에 당첨되셨습니다!`;
+                
+                // 폭죽 효과 표시
+                showConfetti();
+            }, 5000);
+        }
+
+        // 시작 버튼 이벤트 리스너
+        spinButton.addEventListener('click', spinWheel);
+    </script>
+</body>
+</html> 
